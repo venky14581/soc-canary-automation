@@ -1,0 +1,23 @@
+# Python bytecode and caching
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Application databases
+*.db
+*.sqlite3
+
+# Local application logs
+*.log
+C:/canary_logs/
+
+# Automatically generated Excel/CSV evaluation reports
+Deployment_Report.json
+Deployment_Report.csv
+Deployment_Report.xlsx
+
+# OS-specific hidden system files
+.DS_Store
+Thumbs.db
