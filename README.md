@@ -1,103 +1,30 @@
 # Autonomous Canary Deployment & SIEM Telemetry Framework
 
-## Overview
+## Academic Evaluation and Demonstration Manual
 
-The **Autonomous Canary Deployment & SIEM Telemetry Framework** is an enterprise-grade security orchestration solution designed to automate the deployment, verification, tracking, and reporting of canary files (honeytokens) across distributed Windows environments.
-
-The framework provides:
-
-* Centralized graphical deployment management
-* Remote endpoint file deployment
-* Integrity verification using cryptographic hashes
-* SQLite-based deployment tracking
-* Automated JSON and CSV reporting
-* Real-time telemetry generation
-* Integration with enterprise SIEM platforms such as Wazuh via NXLog
+> **Authorized use only:** Use this framework only on systems, virtual machines, and lab networks where you have explicit authorization.
 
 ---
 
-# Key Features
+## 1. Project Overview
 
-### Remote Canary Deployment
+The **Autonomous Canary Deployment & SIEM Telemetry Framework** is a defensive security orchestration project used to deploy harmless canary files (honeytokens) to authorized Windows endpoints.
 
-Deploy canary documents to remote Windows systems using authenticated SMB communication.
+The framework supports:
 
-### Integrity Validation
-
-Automatically compute and verify file hashes to ensure successful deployment.
-
-### Local Deployment Database
-
-Maintain complete deployment history using SQLite.
-
-### Automated Reporting
-
-Generate machine-readable and analyst-friendly reports:
-
-* Deployment_Report.json
-* Deployment_Report.csv
-
-### Real-Time Telemetry Streaming
-
-Produce structured JSON telemetry events suitable for:
-
-* Wazuh
-* Splunk
-* Elastic SIEM
-* QRadar
-* Sentinel
-
-### Centralized GUI
-
-Operate deployments through a user-friendly graphical console without requiring command-line interaction.
+- Centralized graphical deployment management
+- Local and remote Windows endpoint deployment
+- Authenticated SMB-based file transfer
+- Cryptographic hash generation and integrity verification
+- SQLite-based deployment history tracking
+- Automatic JSON and CSV report generation
+- Real-time telemetry generation
+- Mock SOC testing mode
+- Enterprise SIEM integration through NXLog and Wazuh
 
 ---
 
-# Architecture
-
-```text
-+-----------------------------+
-|      Management Console     |
-|          (GUI)              |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|    Deployment Orchestrator  |
-|        (engine.py)          |
-+-------------+---------------+
-              |
-      SMB / IPC Authentication
-              |
-              v
-+-----------------------------+
-|      Windows Endpoint       |
-|     Canary File Storage     |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-| Structured JSON Log Writer  |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|           NXLog             |
-|      Log Forwarder          |
-+-------------+---------------+
-              |
-      UDP Syslog Transport
-              |
-              v
-+-----------------------------+
-|         Wazuh SIEM          |
-|         SOC Console         |
-+-----------------------------+
-```
-
----
-
-# Repository Structure
+## 2. Repository Structure
 
 ```text
 Canary_Deployer/
@@ -115,94 +42,53 @@ Canary_Deployer/
 └── .gitignore
 ```
 
----
+### Component Responsibilities
 
-# Component Description
-
-## database.py
-
-Responsible for:
-
-* SQLite database initialization
-* Deployment record insertion
-* Querying historical deployments
-* Audit tracking
+| File | Responsibility |
+|---|---|
+| `main.py` | Starts the graphical user interface and deployment controls |
+| `app/engine.py` | Handles deployment orchestration, SMB transfer, hashing, and validation |
+| `app/database.py` | Stores deployment history and audit records in SQLite |
+| `app/reporter.py` | Creates JSON, CSV, and telemetry output |
+| `mock_soc.py` | Receives and displays real-time SOC telemetry events |
 
 ---
 
-## engine.py
+## 3. Phase 1: Host Environment Setup
 
-Responsible for:
+### Step 1: Extract the Project Archive
 
-* SMB authentication
-* Remote file transfer
-* Hash generation
-* Integrity verification
-* Deployment status handling
+Extract the project ZIP file to a suitable location.
 
----
+Example:
 
-## reporter.py
-
-Responsible for:
-
-* JSON report generation
-* CSV report generation
-* Deployment statistics aggregation
-* Telemetry formatting
-
----
-
-## main.py
-
-Application entry point providing:
-
-* Graphical User Interface
-* Deployment execution controls
-* Target management
-* Reporting dashboard
-
----
-
-## mock_soc.py
-
-Lightweight testing server that:
-
-* Receives telemetry events
-* Displays formatted deployment logs
-* Simulates SOC ingestion workflows
-
----
-
-# Installation
-
-## Step 1: Clone Repository
-
-```powershell
-git clone <repository-url>
-
-cd Canary_Deployer
+```text
+D:\Canary_Deployer
 ```
 
----
+Open PowerShell inside the extracted project directory.
 
-## Step 2: Create Virtual Environment
+### Step 2: Verify Python Version
+
+The project should preferably use Python 3.12.x.
+
+```powershell
+python --version
+```
+
+### Step 3: Create a Virtual Environment
 
 ```powershell
 python -m venv venv
 ```
 
----
-
-## Step 3: Activate Environment
+### Step 4: Activate the Virtual Environment
 
 ```powershell
 .\venv\Scripts\activate
 ```
 
----
-
-## Step 4: Install Dependencies
+### Step 5: Install Dependencies
 
 ```powershell
 pip install -r requirements.txt
@@ -210,31 +96,89 @@ pip install -r requirements.txt
 
 ---
 
-# Target Endpoint Preparation
+## 4. Phase 2: Target Endpoint Preparation
 
-## Virtual Machine Targets
+The target endpoint can be:
 
-Run the following commands as Administrator:
+- A Windows Virtual Machine in VirtualBox
+- A physical Windows computer in an authorized lab network
+- The same local computer for local deployment testing
+
+### Step 1: Find the Target Username
+
+On the target Windows system:
+
+```powershell
+[System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+```
+
+Use the appropriate credential format:
+
+| Account Type | Username Format |
+|---|---|
+| Local account | `.\username` |
+| Domain account | `DOMAIN\username` |
+| School or Microsoft account | `username@school.com` |
+
+### Step 2: Find the Target IP Address
+
+On the target system:
+
+```powershell
+ipconfig
+```
+
+Find the IPv4 address and use it in the GUI endpoint inventory.
+
+### Step 3: Configure Network Profile
+
+Open PowerShell as Administrator on the target machine:
 
 ```powershell
 Set-NetConnectionProfile -NetworkCategory Private
+```
 
+### Step 4: Enable Required Firewall Rules
+
+Run as Administrator:
+
+```powershell
+Set-NetFirewallRule -DisplayGroup "File and Printer Sharing" -Enabled True
 Set-NetFirewallRule -DisplayGroup "Network Discovery" -Enabled True
-
 Set-NetFirewallRule -DisplayGroup "Remote Service Management" -Enabled True
 ```
 
-Ensure:
+### Step 5: Configure Password Authentication
 
-* Password authentication is enabled
-* A local account password is configured
-* SMB connectivity is available
+For SMB deployment:
+
+- The target account must have a proper password.
+- Do not use a blank password.
+- Windows Hello PIN-only authentication may not work for SMB deployment.
+- Use a normal local or domain account password.
 
 ---
 
-## Physical Machine Targets
+## 5. Deployment Credential Models
 
-Run as Administrator:
+### Model A: Administrator Credentials
+
+Administrator credentials can deploy files through Windows administrative shares.
+
+```text
+\\HOST\C$
+\\HOST\D$
+```
+
+Example destination paths:
+
+```text
+C:\CanaryTest
+C:\Users\Public\Documents
+C:\Users\Public\CanaryTest\Documents
+```
+
+For remote administrative-share deployment in an authorized lab environment, run the following as Administrator on the target machine:
 
 ```powershell
 New-ItemProperty `
@@ -245,106 +189,72 @@ New-ItemProperty `
 -Force
 ```
 
-Enable required firewall rules:
+### Model B: Standard User Credentials
 
-```powershell
-Set-NetConnectionProfile -NetworkCategory Private
-
-Set-NetFirewallRule -DisplayGroup "File and Printer Sharing" -Enabled True
-
-Set-NetFirewallRule -DisplayGroup "Remote Service Management" -Enabled True
-```
-
----
-
-# Credential Models
-
-## Administrator Credentials
-
-Supports deployment to administrative shares:
+If using a non-administrator account, create and share a dedicated folder such as:
 
 ```text
-\\HOST\C$
-\\HOST\D$
+C:\CanaryShare
 ```
 
-Example:
-
-```text
-C:\CanaryTest
-C:\Users\Public\Documents
-```
-
----
-
-## Standard User Credentials
-
-Requires a manually shared folder:
-
-Example:
+Share it as:
 
 ```text
 \\HOST\CanaryShare
 ```
 
-The user must be granted:
+Ensure the selected user has:
 
-* Read Permission
-* Write Permission
+- Read permission
+- Write permission
+- Network access permission
 
----
-
-# Running the Framework
-
-Start the GUI:
-
-```powershell
-python main.py
-```
+Use this model for safer academic demonstrations when administrative shares are not required.
 
 ---
 
-# Testing Mode
+## 6. Phase 3: Mock SOC Telemetry Setup
 
-## Mock SOC Mode
+For standalone demonstration without Wazuh or another SIEM platform, start the included Mock SOC receiver.
 
-Start telemetry receiver:
+Open a new PowerShell terminal inside the project folder:
 
 ```powershell
+.\venv\Scripts\activate
 python mock_soc.py
 ```
 
-Default listener:
+The receiver listens on:
 
 ```text
 http://localhost:8080
 ```
 
-All deployment telemetry will be displayed in real time.
+Use the following ingestion URL in the GUI:
+
+```text
+http://127.0.0.1:8080/api/logs
+```
+
+The Mock SOC terminal should display deployment telemetry events in real time.
 
 ---
 
-# Enterprise SIEM Integration
+## 7. Phase 4: Enterprise SIEM Integration
 
-## NXLog Configuration
+### NXLog
 
-Monitor:
+Configure NXLog to monitor:
 
 ```text
 C:\canary_logs\deployments.json
 ```
 
-Forward logs to:
+NXLog should forward structured deployment events to the SIEM collector.
 
-```text
-UDP 514
-```
+### Wazuh
 
----
-
-## Wazuh Configuration
-
-Configure Wazuh Manager to receive remote syslog events.
+Configure the Wazuh Manager to receive remote syslog events.
 
 Typical configuration file:
 
@@ -352,82 +262,218 @@ Typical configuration file:
 /var/ossec/etc/ossec.conf
 ```
 
----
-
-# Generated Reports
-
-After deployment, the framework generates:
+The Wazuh Manager should have an active syslog listener, commonly configured for:
 
 ```text
-database.db
-
-Deployment_Report.json
-
-Deployment_Report.csv
+UDP Port 514
 ```
 
 ---
 
-# Sample Telemetry Event
+## 8. Phase 5: Start the GUI Application
+
+From the main project directory:
+
+```powershell
+.\venv\Scripts\activate
+python main.py
+```
+
+The GUI provides:
+
+- Source file selection
+- Endpoint inventory loading
+- Target directory pattern selection
+- Credential input
+- SOC ingestion URL configuration
+- Deployment execution controls
+- Progress monitoring
+
+---
+
+## 9. GUI Input Fields
+
+| GUI Field | Description | Example |
+|---|---|---|
+| Source Files | Harmless canary files to deploy | `Finance_Report.xlsx`, `Employee_List.docx` |
+| Host/IP Address | Target endpoint IP address | `192.168.1.25` |
+| User Principal | Authorized target account | `.\username` |
+| Secret Key | Password for the authorized target account | Target account password |
+| Target Directory | Folder where canary files will be placed | `C:\CanaryTest\Documents` |
+| SOC Ingestion URL | Mock SOC endpoint | `http://127.0.0.1:8080/api/logs` |
+
+Recommended harmless canary file types:
+
+```text
+.txt
+.docx
+.xlsx
+.pdf
+.csv
+```
+
+Do not deploy executable files or real sensitive data.
+
+---
+
+## 10. Deployment Execution Flow
+
+1. Select source canary files.
+2. Load or manually add endpoint inventory.
+3. Select authorized target endpoints.
+4. Select target directory patterns.
+5. Enter authorized credentials.
+6. Enter the SOC ingestion URL.
+7. Click **Start Orchestrated Deployment Run**.
+
+The framework will:
+
+1. Authenticate to the target endpoint.
+2. Transfer the selected canary files.
+3. Generate cryptographic hashes.
+4. Verify file integrity after deployment.
+5. Store deployment information in SQLite.
+6. Generate JSON and CSV reports.
+7. Send telemetry to the SOC receiver.
+
+---
+
+## 11. Generated Output Files
+
+After a successful deployment, the project should generate:
+
+```text
+database.db
+Deployment_Report.json
+Deployment_Report.csv
+```
+
+| File | Purpose |
+|---|---|
+| `database.db` | SQLite database containing deployment history and audit records |
+| `Deployment_Report.json` | Structured machine-readable deployment report |
+| `Deployment_Report.csv` | Spreadsheet-compatible deployment report |
+
+---
+
+## 12. Sample Telemetry Event
 
 ```json
 {
-  "timestamp": "2026-06-19T12:54:10Z",
+  "timestamp": "2026-06-23T10:30:00Z",
   "integration": "canary_deployer",
-  "target_host": "VirtualBox-Win11",
-  "target_ip": "192.168.10.38",
-  "file_deployed": "AdmitCard-26041083.pdf",
-  "destination_path": "\\\\192.168.10.38\\C$\\CanaryTest\\",
+  "target_host": "Windows-VM",
+  "target_ip": "192.168.1.25",
+  "file_deployed": "Finance_Report.xlsx",
+  "destination_path": "\\\\192.168.1.25\\C$\\CanaryTest\\Documents\\Finance_Report.xlsx",
   "status": "Success"
 }
 ```
 
 ---
 
-# Verification Checklist
+## 13. Teacher Demonstration Checklist
+
+### 1. Target Directory Proof
+
+Open the target folder on the destination machine:
+
+```text
+C:\CanaryTest\Documents
+```
+
+Show that the canary files were successfully deployed.
+
+### 2. Database and Reporting Proof
+
+Open the project root directory and show:
+
+```text
+database.db
+Deployment_Report.json
+Deployment_Report.csv
+```
+
+Explain:
+
+- `database.db` stores historical deployment records.
+- `Deployment_Report.json` is used for structured automation and SOC integration.
+- `Deployment_Report.csv` can be opened in Microsoft Excel for analysis.
+
+### 3. SOC Telemetry Proof
+
+Show the running terminal where you started:
+
+```powershell
+python mock_soc.py
+```
+
+Show that the telemetry event contains:
+
+- Target hostname
+- Target IP address
+- File deployed
+- Destination path
+- Deployment status
+- Hash validation result
+
+---
+
+## 14. Verification Checklist
 
 ### Deployment Validation
 
-* [ ] File exists on target endpoint
-* [ ] Hash verification passed
-* [ ] Deployment recorded in SQLite database
+- [ ] File exists on the target endpoint.
+- [ ] Hash verification passed.
+- [ ] Deployment record exists in `database.db`.
 
 ### Reporting Validation
 
-* [ ] JSON report generated
-* [ ] CSV report generated
+- [ ] `Deployment_Report.json` generated.
+- [ ] `Deployment_Report.csv` generated.
 
 ### Telemetry Validation
 
-* [ ] Telemetry event generated
-* [ ] Event forwarded via NXLog
-* [ ] Event visible in SIEM dashboard
+- [ ] Telemetry event generated.
+- [ ] Mock SOC received the event.
+- [ ] Event includes target IP, deployed file, and destination path.
+
+### Enterprise SIEM Validation
+
+- [ ] NXLog monitors `C:\canary_logs\deployments.json`.
+- [ ] NXLog forwards telemetry through UDP syslog.
+- [ ] Wazuh receives the event.
+- [ ] Event appears in the Wazuh dashboard.
 
 ---
 
-# Security Considerations
+## 15. Security Considerations
 
-* Store credentials securely.
-* Restrict administrative share access.
-* Encrypt telemetry channels where required.
-* Periodically rotate deployment accounts.
-* Limit deployment scope using organizational policies.
-
----
-
-# Future Enhancements
-
-* Multi-host deployment scheduling
-* Canary file lifecycle management
-* Active Directory integration
-* Role-based access control (RBAC)
-* PowerShell Remoting support
-* Secure TLS telemetry transport
-* Centralized deployment dashboard
-* Automated canary rotation
+- Use only authorized endpoints and lab systems.
+- Do not hardcode passwords in source code.
+- Restrict administrative share access.
+- Use a dedicated deployment account where possible.
+- Use shared folders for standard-user demonstrations.
+- Avoid using real confidential documents as canary files.
+- Rotate deployment credentials periodically.
+- Use encrypted telemetry transport in production environments.
+- Limit deployment scope using organizational policies.
 
 ---
 
-# License
+## 16. Future Enhancements
+
+- Multi-host deployment scheduling
+- Canary file lifecycle management
+- Automatic canary rotation
+- Active Directory integration
+- Role-Based Access Control
+- Secure TLS telemetry transport
+- Centralized deployment dashboard
+- PowerShell Remoting support
+
+---
+
+## License
 
 This project is intended for authorized security testing, deception engineering, validation exercises, and defensive security operations within approved environments.
